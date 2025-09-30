@@ -1,0 +1,45 @@
+.page main[b-14ur72jh7n] {
+    padding: 20px;
+}
+
+.rz-datagrid[b-14ur72jh7n] {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.rz-datagrid-cell[b-14ur72jh7n] {
+    padding: 10px 14px;
+}
+
+.rz-button.square[b-14ur72jh7n] {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    text-align: center;
+    justify-content: center;
+}
+
+.rz-datagrid[b-14ur72jh7n] {
+    text-align: right !important;
+}
+
+.rz-button.view-btn[b-14ur72jh7n] {
+    min-width: auto;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+
+.rz-cell-action[b-14ur72jh7n] {
+    text-align: right !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    white-space: nowrap;
+}
+
+.view-btn[b-14ur72jh7n] {
+    width: 100px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}

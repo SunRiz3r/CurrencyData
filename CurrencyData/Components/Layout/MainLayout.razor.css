@@ -1,0 +1,45 @@
+.page main {
+    padding: 20px;
+}
+
+.rz-datagrid {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.rz-datagrid-cell {
+    padding: 10px 14px;
+}
+
+.rz-button.square {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    text-align: center;
+    justify-content: center;
+}
+
+.rz-datagrid {
+    text-align: right !important;
+}
+
+.rz-button.view-btn {
+    min-width: auto;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+
+.rz-cell-action {
+    text-align: right !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    white-space: nowrap;
+}
+
+.view-btn {
+    width: 100px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}

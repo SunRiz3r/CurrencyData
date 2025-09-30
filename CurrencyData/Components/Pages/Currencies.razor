@@ -1,0 +1,144 @@
+@page "/"
+@rendermode InteractiveServer
+
+@using CurrencyData.Models
+@using Radzen
+@inject CurrencyData.Services.CurrencyService CurrencyService
+@inject IJSRuntime JS
+
+<PageTitle>Currency</PageTitle>
+
+<h3>Курсы валют (относительно @selectedBaseCurrency)</h3>
+
+<div style="margin-bottom:10px;">
+    <RadzenButton Text="Обновить" Click="Update" Style="margin-right:10px;" />
+    <RadzenButton Text="Скачать XLSX" Click="DownloadXlsx" />
+</div>
+
+@if (isLoading)
+{
+    <p><em>Обновляем данные…</em></p>
+}
+else if (currencies == null || currencies.Count == 0)
+{
+    <p><em>Нет данных. Нажмите «Обновить».</em></p>
+}
+else
+{
+    <RadzenDataGrid Data="@currencies"
+                    TItem="Currency"
+                    ColumnWidth="200px"
+                    RowRender="@( (RowRenderEventArgs<Currency> args) => {
+                        if (string.Equals(args.Data.Name, selectedBaseCurrency, StringComparison.OrdinalIgnoreCase))
+                        {
+                            args.Attributes["style"] = "background-color: #e0f7fa;";
+                        }
+                    } )">
+        <Columns>
+            <RadzenDataGridColumn TItem="Currency" Property="Name" Title="Код валюты" />
+            <RadzenDataGridColumn TItem="Currency" Property="Value" Title="Курс" />
+
+            <!-- Колонка Действие -->
+            <RadzenDataGridColumn TItem="Currency" Title="Действие" Width="120px" CssClass="rz-cell-action">
+                <Template Context="c">
+                    <RadzenButton Text="Посмотреть"
+                                  Size="ButtonSize.Small"
+                                  Class="view-btn"
+                                  Click="@(() => ViewFromThisCurrency(c.Name))"
+                                  Disabled="@(string.Equals(c.Name, selectedBaseCurrency, StringComparison.OrdinalIgnoreCase))" />
+                </Template>
+            </RadzenDataGridColumn>
+
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@code {
+    private List<Currency> currencies = new();
+    private bool isLoading = false;
+
+    private string selectedBaseCurrency = "EUR";
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+
+        currencies = await CurrencyService.GetCurrenciesFromDbAsync();
+        if (currencies == null || currencies.Count == 0)
+        {
+            await UpdateCurrenciesFiltered();
+        }
+
+        isLoading = false;
+
+        // Автообновление (можно оставить или убрать, т.к. данные обновляются раз в день)
+        //_ = AutoUpdateLoop();
+    }
+
+    private async Task UpdateCurrenciesFiltered()
+    {
+        isLoading = true;
+
+        currencies = await CurrencyService.UpdateCurrenciesAsync(selectedBaseCurrency);
+
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AutoUpdateLoop()
+    {
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5));
+            try
+            {
+                await Update();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error during auto-update: " + ex.Message);
+            }
+        }
+    }
+
+    private async Task Update()
+    {
+        await UpdateCurrenciesFiltered();
+        Console.WriteLine("Update at " + DateTime.Now);
+    }
+
+    private async Task DownloadXlsx()
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Currencies");
+        worksheet.Cell(1, 1).Value = "Код валюты";
+        worksheet.Cell(1, 2).Value = $"Курс ({selectedBaseCurrency} → target)";
+
+        for (int i = 0; i < currencies.Count; i++)
+        {
+            worksheet.Cell(i + 2, 1).Value = currencies[i].Name;
+            worksheet.Cell(i + 2, 2).Value = currencies[i].Value;
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+
+        var fileName = $"Currencies_{selectedBaseCurrency}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        var bytes = stream.ToArray();
+        var base64 = Convert.ToBase64String(bytes);
+        var url = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
+
+        await JS.InvokeVoidAsync("downloadFileFromUrl", fileName, url);
+    }
+
+    private async Task ViewFromThisCurrency(string newBase)
+    {
+        if (!string.IsNullOrEmpty(newBase) && newBase != selectedBaseCurrency)
+        {
+            selectedBaseCurrency = newBase;
+            await UpdateCurrenciesFiltered();
+            Console.WriteLine("Base switched via button: " + selectedBaseCurrency);
+        }
+    }
+}
